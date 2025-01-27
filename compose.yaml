@@ -1,0 +1,52 @@
+networks:
+  aulao:
+    driver: bridge
+
+volumes:
+  aulao_db: 
+
+services:
+  #nome que eu dou para o serviço
+  postgres1:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: saudee10
+      POSTGRES_USER: mauriciomota
+      POSTGRES_DB: meu-db
+      PG_DATA: /var/lib/postgresql/data/pgdata
+      #na realidade está em '/var/lib/docker/volumes/aulao_db/_data' na máquina host porque os volumes são gerenciados pelo docker.
+    
+    #este volume foi mapeado para a pasta da máquina virtual
+    volumes:
+      - aulao_db:/var/lib/postgresql/data
+    
+    networks:
+      - aulao
+    #porta padrão do postgres
+    ports:
+      - "5432:5432"
+
+
+  #nome que eu dou para o serviço
+  kubenews:
+    #imagem já criada abaixo
+    image: atomzenitram/kube-news-aulao:v1
+    #se usar o comando 'docker-compose up --build' as 3 linhas avbaixo fazem sentido
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    environment:
+      DB_PASSWORD: saudee10
+      DB_USERNAME: mauriciomota
+      DB_DATABASE: meu-db
+
+      #nome do container onde está o banco de dados
+      DB_HOST: postgres1
+
+    #O serviço será incluido nessa rede permitindo encontrar outros containers nesta rede.
+    networks:
+      - aulao
+    #porta 8181 é a que o container usa externamente e 8080 internamente
+    ports:
+      - "8181:8080"
